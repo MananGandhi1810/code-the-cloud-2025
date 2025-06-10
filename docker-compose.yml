@@ -1,0 +1,45 @@
+name: 10000x-devs
+
+services:
+    postgresql:
+        image: bitnami/postgresql:latest
+        restart: unless-stopped
+        ports:
+            - "2345:5432/tcp"
+        volumes:
+            - pg-data:/bitnami/postgresql
+        environment:
+            - POSTGRESQL_PGAUDIT_LOG=READ,WRITE
+            - POSTGRESQL_LOG_HOSTNAME=true
+            - POSTGRESQL_REPLICATION_MODE=master
+            - POSTGRESQL_REPLICATION_USER=repl_user
+            - POSTGRESQL_REPLICATION_PASSWORD=repl_user
+            - POSTGRESQL_USERNAME=postgres
+            - POSTGRESQL_PASSWORD=postgres
+            - POSTGRESQL_DATABASE=10000x-devs
+        labels:
+            - "com.centurylinklabs.watchtower.enable=false"
+
+    redis:
+        image: bitnami/redis:latest
+        restart: unless-stopped
+        ports:
+            - "6379:6379/tcp"
+        environment:
+            - ALLOW_EMPTY_PASSWORD=yes
+        labels:
+            - "com.centurylinklabs.watchtower.enable=false"
+
+    backend:
+        image: ghcr.io/manangandhi1810/10000x-devs-backend:latest
+        restart: unless-stopped
+        ports:
+            - 8000:8000/tcp
+            # - 5555:5555/tcp
+        volumes:
+            - ./backend/.env:/usr/src/app/.env
+            - /var/run/docker.sock:/var/run/docker.sock
+            - ./backend/access.log:/usr/src/app/access.log
+        user: root
+        command: sh -c "pnpx prisma migrate deploy && npm run start"
+        env_file: ./backend/.env
