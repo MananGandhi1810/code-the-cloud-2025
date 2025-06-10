@@ -4,6 +4,7 @@ import {
     getAccessToken,
     getUserDetails,
     getUserEmails,
+    getUserRepositories,
 } from "../utils/github-api.js";
 
 const prisma = new PrismaClient();
@@ -64,10 +65,10 @@ const githubCallbackHandler = async (req, res) => {
     const requestToken = jwt.sign(
         { email: user.email, name: user.name, id: user.id, scope: "request" },
         jwtSecret,
-        { expiresIn: 5 * 60 },
+        { expiresIn: 5 * 60 }
     );
     res.redirect(
-        `${process.env.FRONTEND_URL}/token?requestToken=${requestToken}`,
+        `${process.env.FRONTEND_URL}/token?requestToken=${requestToken}`
     );
 };
 
@@ -121,7 +122,7 @@ const accessTokenHandler = async (req, res) => {
     }
     const accessToken = jwt.sign(
         { email: user.email, name: user.name, id: user.id, scope: "access" },
-        jwtSecret,
+        jwtSecret
     );
     res.json({
         success: true,
@@ -140,6 +141,44 @@ const userHandler = (req, res) => {
         message: "User details fetched succesfully",
         data: {
             user,
+        },
+    });
+};
+
+const getUserReposHandler = async (req, res) => {
+    const user = req.user;
+    if (!user.ghAccessToken) {
+        return res.status(403).json({
+            success: false,
+            message: "User does not have a GitHub access token",
+            data: null,
+        });
+    }
+    let repositories = [];
+    try {
+        repositories = await getUserRepositories(user.ghAccessToken);
+    } catch (error) {
+        console.error("Error fetching repositories:", error);
+        return res.status(500).json({
+            success: false,
+            message: "An error occurred while fetching repositories",
+            data: null,
+        });
+    }
+    if (!repositories || repositories.length === 0) {
+        return res.status(404).json({
+            success: false,
+            message: "No repositories found for the user",
+            data: {
+                repositories: [],
+            },
+        });
+    }
+    res.json({
+        success: true,
+        message: "Repositories fetched successfully",
+        data: {
+            repositories,
         },
     });
 };
