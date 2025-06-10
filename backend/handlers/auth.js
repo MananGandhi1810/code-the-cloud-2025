@@ -183,4 +183,9 @@ const getUserReposHandler = async (req, res) => {
     });
 };
 
-export { githubCallbackHandler, accessTokenHandler, userHandler };
+export {
+    githubCallbackHandler,
+    accessTokenHandler,
+    userHandler,
+    getUserReposHandler,
+};

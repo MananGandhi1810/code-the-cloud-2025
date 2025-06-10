@@ -1,4 +1,4 @@
-name: 10000x-devs
+name: cloudburst
 
 services:
     postgresql:
@@ -30,16 +30,5 @@ services:
         labels:
             - "com.centurylinklabs.watchtower.enable=false"
 
-    backend:
-        image: ghcr.io/manangandhi1810/10000x-devs-backend:latest
-        restart: unless-stopped
-        ports:
-            - 8000:8000/tcp
-            # - 5555:5555/tcp
-        volumes:
-            - ./backend/.env:/usr/src/app/.env
-            - /var/run/docker.sock:/var/run/docker.sock
-            - ./backend/access.log:/usr/src/app/access.log
-        user: root
-        command: sh -c "pnpx prisma migrate deploy && npm run start"
-        env_file: ./backend/.env
+volumes:
+    cloudburst-data:
