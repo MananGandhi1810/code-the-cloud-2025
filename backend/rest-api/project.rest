@@ -1,0 +1,100 @@
+@host = http://localhost:8000
+@projectId = your_project_id
+@token = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyZHVtYW5hbkBnbWFpbC5jb20iLCJuYW1lIjoiTWFuYW4gR2FuZGhpIiwiaWQiOiJjbWJxem1oaG8wMDAwdHpzd2loMHJocWNsIiwic2NvcGUiOiJhY2Nlc3MiLCJpYXQiOjE3NDk1ODgxNzN9.Aka6U2nxTnSyIAL526XF1qrFTDvDiXm-gds62ocVa3c
+
+### Create a new project (with GitHub URL)
+POST {{host}}/project/
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "title": "My New Project from GitHub",
+  "description": "A cool project generated from a GitHub repository.",
+  "githubUrl": "https://github.com/MananGandhi1810/express-auth-template",
+  "prompt": "Generate a REST API for a blog with posts and comments."
+}
+
+### Create a new project (with OpenAPI Spec)
+POST {{host}}/project/
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "title": "My New Project from OpenAPI",
+  "description": "A cool project generated from an OpenAPI specification.",
+  "openAPISpec": {
+    "openapi": "3.0.0",
+    "info": {
+      "title": "Sample API",
+      "version": "1.0.0"
+    },
+    "paths": {
+      "/users": {
+        "get": {
+          "summary": "List all users",
+          "responses": {
+            "200": {
+              "description": "A list of users."
+            }
+          }
+        }
+      }
+    }
+  },
+  "prompt": "Implement this API specification."
+}
+
+### Get all projects
+GET {{host}}/project/
+Authorization: {{token}}
+
+### Get project by ID
+GET {{host}}/project/{{projectId}}
+Authorization: {{token}}
+
+### Get project status
+GET {{host}}/project/{{projectId}}/status
+Authorization: {{token}}
+
+### Get project schema
+GET {{host}}/project/{{projectId}}/schema
+Authorization: {{token}}
+
+### Update project schema
+PUT {{host}}/project/{{projectId}}/schema
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "dbSchema": {
+    "User": {
+      "fields": {
+        "id": "String",
+        "name": "String",
+        "email": "String"
+      }
+    }
+  },
+  "seedData": [
+    {
+      "model": "User",
+      "records": [
+        { "name": "Alice", "email": "alice@example.com" },
+        { "name": "Bob", "email": "bob@example.com" }
+      ]
+    }
+  ]
+}
+
+### Approve project schema
+POST {{host}}/project/{{projectId}}/schema/approve
+Authorization: {{token}}
+
+### Get project code
+GET {{host}}/project/{{projectId}}/code
+Authorization: {{token}}
+
+### Delete project
+DELETE {{host}}/project/{{projectId}}
+Authorization: {{token}}
+

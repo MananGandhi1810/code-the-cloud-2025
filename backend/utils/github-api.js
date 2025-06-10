@@ -1,5 +1,35 @@
 import axios from "axios";
 import { exists, get, set } from "./keyvalue-db.js";
+import tar from 'tar-stream'; 
+import { Readable } from 'stream'; 
+import zlib from "zlib";
+
+const allowedFileExtensions = [
+    ".js",
+    ".ts",
+    ".jsx",
+    ".tsx",
+    ".py",
+    ".java",
+    ".c",
+    ".cpp",
+    ".cs",
+    ".go",
+    ".php",
+    ".rb",
+    ".swift",
+    ".kotlin",
+    ".html",
+    ".css",
+    ".json",
+    ".md",
+    ".yaml",
+    ".yml",
+    ".dart",
+    ".kt",
+    ".vue",
+    ".svelte",
+]
 
 const getAccessToken = async (code) => {
     return await axios.post(
@@ -59,9 +89,101 @@ const getUserRepositories = async (token) => {
 };
 
 
+const getRepoCodeBase = async (repoUrl, token = "") => {
+    if (!token) {
+        const cachedCodeBase = await get(repoUrl);
+        if (cachedCodeBase) {
+            return cachedCodeBase;
+        }
+    }
+    const repoProperties = await getProperties(repoUrl);
+    if (!repoProperties) {
+        console.error("Could not get repo properties for:", repoUrl);
+        return null;
+    }
+    const response = await axios.get(
+        `https://api.github.com/repos/${repoProperties.owner}/${repoProperties.name}/tarball`,
+        {
+            headers: {
+                Authorization: "Bearer " + token,
+            },
+            responseType: 'arraybuffer',
+            validateStatus: false,
+        }
+    );
+
+    if (response.status >= 400 || !response.data) {
+        console.error(`Failed to download tarball: ${response.status} for ${repoUrl}`);
+        return null;
+    }
+
+    const files = [];
+    return new Promise((resolve, reject) => {
+        const gunzip = zlib.createGunzip();
+        const extract = tar.extract();
+        extract.on('entry', (header, stream, next) => {
+            if (header.type === 'file') {
+                const chunks = [];
+                if (!allowedFileExtensions.some(ext => header.name.endsWith(ext))) {
+                    stream.resume(); 
+                    return next();
+                }
+                stream.on('data', (chunk) => chunks.push(chunk));
+                stream.on('end', () => {
+                    files.push({
+                        fileName: header.name,
+                        contents: Buffer.concat(chunks).toString('utf8'),
+                    });
+                    next();
+                });
+                stream.resume();
+            } else {
+                stream.resume();
+                next();
+            }
+        });
+
+        extract.on('finish', async () => {
+            if (!token) {
+                try {
+                    await set(repoUrl, files);
+                } catch (cacheError) {
+                    console.error("Failed to cache codebase:", cacheError);
+                }
+            }
+            resolve(files);
+        });
+
+        extract.on('error', (err) => {
+            console.error("Error extracting tarball:", err);
+            reject(err);
+        });
+
+        const readableStream = Readable.from(Buffer.from(response.data));
+        readableStream.pipe(gunzip).pipe(extract);
+    });
+};
+
+
+const getProperties = async (repoUrl) => {
+    const githubRegex =
+        /https?:\/\/(www\.)?github.com\/(?<owner>[\w.-]+)\/(?<name>[\w.-]+)/;
+    const match = repoUrl.match(githubRegex);
+    if (!match || !match.groups) {
+        return null;
+    }
+    const { owner, name } = match.groups;
+    return {
+        owner,
+        name,
+    };
+};
+
+
 export {
     getAccessToken,
     getUserDetails,
     getUserEmails,
     getUserRepositories,
+    getRepoCodeBase,
 };
