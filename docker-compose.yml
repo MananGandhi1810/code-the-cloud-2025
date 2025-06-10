@@ -16,7 +16,7 @@ services:
             - POSTGRESQL_REPLICATION_PASSWORD=repl_user
             - POSTGRESQL_USERNAME=postgres
             - POSTGRESQL_PASSWORD=postgres
-            - POSTGRESQL_DATABASE=10000x-devs
+            - POSTGRESQL_DATABASE=gccd
         labels:
             - "com.centurylinklabs.watchtower.enable=false"
 
