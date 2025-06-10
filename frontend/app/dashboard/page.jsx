@@ -1,140 +1,155 @@
 "use client";
+import ProjectCard from "@/components/dashboard/ProjectCard";
 import * as React from "react";
-import axios from "axios";
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-    Command,
-    CommandEmpty,
-    CommandGroup,
-    CommandInput,
-    CommandItem,
-    CommandList,
-} from "@/components/ui/command";
-import {
-    Popover,
-    PopoverContent,
-    PopoverTrigger,
-} from "@/components/ui/popover";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Plus, Github, FileText } from "lucide-react";
+import { useRouter } from 'next/navigation';
+
+const dummyProjects = [
+    {
+        id: 1,
+        name: "E-commerce API",
+        description: "RESTful API for online shopping platform",
+        type: "GitHub Repository",
+        status: "Active",
+        lastUpdated: "2 hours ago",
+        endpoints: 24,
+        url: "https://github.com/user/ecommerce-api"
+    },
+    {
+        id: 2,
+        name: "User Management Service",
+        description: "Microservice for user authentication and profiles",
+        type: "OpenAPI Spec",
+        status: "Active",
+        lastUpdated: "1 day ago",
+        endpoints: 12,
+        url: "https://api.userservice.com/docs"
+    },
+    {
+        id: 3,
+        name: "Payment Gateway Integration",
+        description: "Payment processing API with multiple providers",
+        type: "GitHub Repository",
+        status: "Inactive",
+        lastUpdated: "3 days ago",
+        endpoints: 8,
+        url: "https://github.com/user/payment-gateway"
+    },
+    {
+        id: 4,
+        name: "Social Media Analytics",
+        description: "API for social media data aggregation",
+        type: "OpenAPI Spec",
+        status: "Active",
+        lastUpdated: "5 hours ago",
+        endpoints: 18,
+        url: "https://analytics.social.com/api"
+    },
+    {
+        id: 5,
+        name: "Inventory Management",
+        description: "Stock and warehouse management system",
+        type: "GitHub Repository",
+        status: "Active",
+        lastUpdated: "12 hours ago",
+        endpoints: 15,
+        url: "https://github.com/user/inventory-api"
+    }
+];
+
 
 export default function DashboardPage() {
-    const [repos, setRepos] = React.useState([]);
-    const [loading, setLoading] = React.useState(true);
-    const [open, setOpen] = React.useState(false);
-    const [value, setValue] = React.useState("");
     const [search, setSearch] = React.useState("");
+    const [filteredProjects, setFilteredProjects] = React.useState(dummyProjects);
+    const router = useRouter();
 
     React.useEffect(() => {
-        async function fetchRepos() {
-            setLoading(true);
-            try {
-                const res = await axios.get(`${process.env.NEXT_PUBLIC_SERVER_URL}/auth/repos`, {
-                    headers: {
-                        Authorization: `Bearer ${sessionStorage.getItem("accessToken")}`,
-                    },
-                });
-                setRepos(res.data.data.repositories || []);
-            } catch (e) {
-                setRepos([]);
-            }
-            setLoading(false);
+        const filtered = dummyProjects.filter(project =>
+            project.name.toLowerCase().includes(search.toLowerCase()) ||
+            project.description.toLowerCase().includes(search.toLowerCase()) ||
+            project.type.toLowerCase().includes(search.toLowerCase())
+        );
+        setFilteredProjects(filtered);
+    }, [search]);
+
+    const handleImportSelect = (value) => {
+        if (value === "github") {
+            router.push('/dashboard/github');
+        } else if (value === "openapi") {
+            router.push('/dashboard/openapi');
         }
-        fetchRepos();
-    }, []);
-
-    // Filter repos based on search input
-    const filteredRepos = repos.filter(
-        (repo) =>
-            repo.name.toLowerCase().includes(search.toLowerCase()) ||
-            repo.owner?.login?.toLowerCase().includes(search.toLowerCase())
-    );
-
-    const selectedRepo = repos.find((repo) => repo.full_name === value);
+    };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#18181b] via-[#23232a] to-[#1e1e23] flex flex-col items-center py-20">
-            <div className="bg-[#23232a] border border-[#2e2e38] rounded-2xl shadow-2xl p-10 w-full max-w-lg flex flex-col items-center">
-                <h1 className="text-3xl font-bold text-white mb-2 text-center">
-                    Select a Repository
-                </h1>
-                <p className="text-[#b0b0c3] mb-8 text-center">
-                    Choose a GitHub repository to generate or manage your mock API data.
-                </p>
-                <div className="w-full mb-6">
-                    {loading ? (
-                        <Skeleton className="h-12 w-full rounded-xl" />
-                    ) : (
-                        <Popover open={open} onOpenChange={setOpen}>
-                            <PopoverTrigger asChild>
-                                <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    aria-expanded={open}
-                                    className={cn(
-                                        "w-full h-12 justify-between bg-[#23232a] border border-[#363646] text-white rounded-xl shadow-sm hover:bg-[#23232a] focus:ring-2 focus:ring-[#43c6ac]",
-                                        !selectedRepo && "text-[#b0b0c3]"
-                                    )}
-                                >
-                                    {selectedRepo
-                                        ? (
-                                            <span>
-                                                <span className="font-medium">{selectedRepo.name}</span>
-                                                <span className="ml-2 text-xs text-[#b0b0c3]">{selectedRepo.owner?.login}</span>
-                                            </span>
-                                        )
-                                        : "Select a repository..."}
-                                    <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                </Button>
-                            </PopoverTrigger>
-                            <PopoverContent className="w-full min-w-[320px] p-0 bg-[#23232a] border border-[#363646] text-white rounded-xl">
-                                <Command>
-                                    <CommandInput
-                                        placeholder="Search repositories..."
-                                        value={search}
-                                        onValueChange={setSearch}
-                                    />
-                                    <CommandList>
-                                        <CommandEmpty>No repositories found.</CommandEmpty>
-                                        <CommandGroup>
-                                            {filteredRepos.map((repo) => (
-                                                <CommandItem
-                                                    key={repo.id}
-                                                    value={repo.full_name}
-                                                    onSelect={(currentValue) => {
-                                                        setValue(currentValue);
-                                                        setOpen(false);
-                                                        setSearch("");
-                                                    }}
-                                                    className="flex flex-col items-start"
-                                                >
-                                                    <div className="flex items-center w-full">
-                                                        <CheckIcon
-                                                            className={cn(
-                                                                "mr-2 h-4 w-4",
-                                                                value === repo.full_name ? "opacity-100" : "opacity-0"
-                                                            )}
-                                                        />
-                                                        <span className="font-medium">{repo.name}</span>
-                                                    </div>
-                                                    <span className="ml-6 text-xs text-[#b0b0c3]">{repo.owner?.login}</span>
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-                    )}
+        <div className="min-h-screen py-12 px-8 sm:px-12 lg:px-16">
+            <div className="max-w-7xl mx-auto">
+                <div className="text-left mb-12">
+                    <div className="mb-6">
+                        <span className="inline-block px-3 py-1 text-xs font-mono font-medium tracking-wider uppercase text-yellow-900 bg-yellow-200 rounded-full">
+                            🚀 Your Projects
+                        </span>
+                    </div>
+
+                    <h1 className="text-4xl font-bold tracking-tight text-foreground mb-6 sm:text-5xl lg:text-6xl" style={{ fontFamily: "'Product Sans', sans-serif" }}>
+                        Project Dashboard
+                        <br />
+                        <span className="text-primary">Manage Your APIs</span>
+                    </h1>
+
+                    <p className="text-xl text-muted-foreground leading-relaxed mb-8 max-w-3xl font-light" style={{ fontFamily: "'Product Sans', sans-serif", fontWeight: 300 }}>
+                        View, manage, and monitor all your API projects in one place. Import new repositories or specifications to get started.
+                    </p>
+                </div>                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                    <div className="flex-1 relative max-w-md">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search projects..."
+                            value={search}
+                            onChange={(e) => setSearch(e.target.value)}
+                            className="h-10 pl-10 text-sm border-2 border-border"
+                            style={{ fontFamily: "'Product Sans', sans-serif" }}
+                        />
+                    </div>                    <Select onValueChange={handleImportSelect}>
+                        <SelectTrigger className="w-full sm:w-40 h-10 border-2 border-border text-sm" style={{ fontFamily: "'Product Sans', sans-serif" }}>
+                            <div className="flex items-center gap-2">
+                                <Plus className="w-4 h-4" />
+                                <SelectValue placeholder="Import New" />
+                            </div>
+                        </SelectTrigger><SelectContent>
+                            <SelectItem value="github" className="text-sm py-2">
+                                <div className="flex items-center gap-2">
+                                    <Github className="w-4 h-4" />
+                                    GitHub Repository
+                                </div>
+                            </SelectItem>
+                            <SelectItem value="openapi" className="text-sm py-2">
+                                <div className="flex items-center gap-2">
+                                    <FileText className="w-4 h-4" />
+                                    OpenAPI Spec
+                                </div>
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
-                <Button
-                    className="w-full h-12 bg-gradient-to-r from-[#f8ffae] to-[#43c6ac] text-black font-semibold text-lg rounded-xl shadow-lg hover:from-[#43c6ac] hover:to-[#f8ffae] transition-all border-none"
-                    size="lg"
-                    disabled={!selectedRepo}
-                >
-                    Continue
-                </Button>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredProjects.map((project) => (
+                        <ProjectCard key={project.id} project={project} />
+                    ))}
+                </div>
+
+                {filteredProjects.length === 0 && (
+                    <div className="text-center py-12">
+                        <div className="text-6xl mb-4">📭</div>
+                        <h3 className="text-xl font-bold text-foreground mb-2" style={{ fontFamily: "'Product Sans', sans-serif" }}>
+                            No projects found
+                        </h3>
+                        <p className="text-muted-foreground" style={{ fontFamily: "'Product Sans', sans-serif", fontWeight: 300 }}>
+                            Try adjusting your search or import a new project                        </p>
+                    </div>
+                )}
             </div>
         </div>
     );
