@@ -17,3 +17,7 @@
     - Additional Prompts
 - [] Represent Planning agent output
 - ...
+
+![Roadmap](<roadmap.jpg>)
+
+Follow this roadmap.
