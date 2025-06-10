@@ -11,7 +11,7 @@ Authorization: {{token}}
   "title": "My New Project from GitHub",
   "description": "A cool project generated from a GitHub repository.",
   "githubUrl": "https://github.com/MananGandhi1810/express-auth-template",
-  "prompt": "Generate a REST API for a blog with posts and comments."
+  "prompt": "Generate a REST API for this express authentication template."
 }
 
 ### Create a new project (with OpenAPI Spec)

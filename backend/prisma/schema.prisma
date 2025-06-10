@@ -24,9 +24,13 @@ enum ProjectStatus {
   Created
   SchemaGenerating
   SchemaGenerated
+  SchemaGenerationFailed
   GeneratingCode
+  CodeGenerationFailed
   BuildingImage
+  ImageBuildFailed
   ImagePublished
+  ImagePublishFailed
 }
 
 enum HttpMethod {

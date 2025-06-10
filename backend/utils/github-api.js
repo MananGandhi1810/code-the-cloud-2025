@@ -30,6 +30,30 @@ const allowedFileExtensions = [
     ".vue",
     ".svelte",
 ]
+const blacklist = [
+    "node_modules",
+    ".git",
+    ".github",
+    ".vscode",
+    ".idea",
+    ".DS_Store",
+    "dist",
+    "build",
+    "coverage",
+    "out",
+    "bin",
+    "obj",
+    "package-lock.json",
+    "yarn.lock",
+    "pnpm-lock.yaml",
+    "composer.lock",
+    "Gemfile.lock",
+    "Cargo.lock",
+    "pubspec.lock",
+    "vendor",
+    "bower_components",
+    "tmp",
+];
 
 const getAccessToken = async (code) => {
     return await axios.post(
@@ -126,6 +150,10 @@ const getRepoCodeBase = async (repoUrl, token = "") => {
                 const chunks = [];
                 if (!allowedFileExtensions.some(ext => header.name.endsWith(ext))) {
                     stream.resume(); 
+                    return next();
+                }
+                if (blacklist.some(blacklisted => header.name.includes(blacklisted))) {
+                    stream.resume();
                     return next();
                 }
                 stream.on('data', (chunk) => chunks.push(chunk));
