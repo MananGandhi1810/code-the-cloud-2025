@@ -7,7 +7,7 @@ services:
         ports:
             - "2345:5432/tcp"
         volumes:
-            - pg-data:/bitnami/postgresql
+            - cloudburst-data:/bitnami/postgresql
         environment:
             - POSTGRESQL_PGAUDIT_LOG=READ,WRITE
             - POSTGRESQL_LOG_HOSTNAME=true
