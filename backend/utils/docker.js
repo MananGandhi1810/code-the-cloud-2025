@@ -28,11 +28,10 @@ const buildDockerImage = async (projectId, { mainFile, dependencies, files }, us
     const dockerFileContent = getDockerFile({ mainFile, dependencies, files });
     const imageTag = `${process.env.DOCKER_REGISTRY}/${userGhAcc}/mock-api-server-${projectId}:latest`.toLowerCase();
 
-    const tempDir = fs.mkdirSync(
-        path
-            .join("/usr/src", "/projects", imageTag.split(":")[0] + "-")
-            .replaceAll(/[^a-z0-9-]/g, "-")
-    );
+    const tempDir = path
+        .join(os.tmpdir(), imageTag.split(":")[0] + "-")
+        .replaceAll(/[^a-z0-9-]/g, "-");
+    fs.mkdirSync(tempDir, { recursive: true });
     const dockerFilePath = path.join(tempDir, "Dockerfile");
     fs.writeFileSync(dockerFilePath, dockerFileContent);
     for (const file of files) {
