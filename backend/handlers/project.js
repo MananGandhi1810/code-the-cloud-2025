@@ -1,5 +1,5 @@
-import { PrismaClient } from '@prisma/client';
-import { sendQueueMessage } from '../utils/queue-manager.js';
+import { PrismaClient } from "@prisma/client";
+import { sendQueueMessage } from "../utils/queue-manager.js";
 const prisma = new PrismaClient();
 
 export const createProjectHandler = async (req, res) => {
@@ -66,7 +66,7 @@ export const getProjectsHandler = async (req, res) => {
 
     const projects = await prisma.project.findMany({
         where: { userId },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { createdAt: "desc" },
     });
 
     res.status(200).json({
@@ -128,7 +128,7 @@ export const getProjectStatusHandler = async (req, res) => {
     res.status(200).json({
         success: true,
         message: "Project status fetched successfully",
-        data: { project },
+        data: { status: project.status },
     });
 };
 
@@ -154,7 +154,7 @@ export const getProjectSchemaHandler = async (req, res) => {
         });
     }
 
-    if (!project.schema) {
+    if (!project.endpoints || project.endpoints.length === 0) {
         return res.status(404).json({
             success: false,
             message: "Project schema not found",
@@ -213,11 +213,75 @@ export const updateProjectSchemaHandler = async (req, res) => {
 };
 
 export const approveProjectSchemaHandler = async (req, res) => {
-    // Implementation for approving project schema
-    res.status(501).json({ message: "Not Implemented" });
+    const { projectId } = req.params;
+    const userId = req.user.id;
+    const project = await prisma.project.findUnique({
+        where: {
+            id: projectId,
+            userId: userId,
+        },
+    });
+    if (!project) {
+        return res.status(404).json({
+            success: false,
+            message: "Project not found",
+            data: null,
+        });
+    }
+    if (project.status !== "SchemaGenerated") {
+        return res.status(400).json({
+            success: false,
+            message: "Project schema is not generated yet, or already approved",
+            data: null,
+        });
+    }
+    await sendQueueMessage(
+        "generate-code",
+        JSON.stringify({
+            projectId: projectId,
+            userId: userId,
+        })
+    );
+    res.status(200).json({
+        success: true,
+        message: "Project schema approved and code generation requested",
+        data: null,
+    });
 };
 
 export const getProjectCodeHandler = async (req, res) => {
-    // Implementation for getting project code
-    res.status(501).json({ message: "Not Implemented" });
+    const { projectId } = req.params;
+    const userId = req.user.id;
+
+    const project = await prisma.project.findUnique({
+        where: {
+            id: projectId,
+            userId: userId,
+        },
+        select: {
+            generatedCode: true,
+        },
+    });
+
+    if (!project) {
+        return res.status(404).json({
+            success: false,
+            message: "Project not found",
+            data: null,
+        });
+    }
+
+    if (!project.generatedCode) {
+        return res.status(404).json({
+            success: false,
+            message: "Project code not generated yet",
+            data: null,
+        });
+    }
+
+    res.status(200).json({
+        success: true,
+        message: "Project code fetched successfully",
+        data: { code: project.generatedCode },
+    });
 };

@@ -46,7 +46,7 @@ Example Output:
             }
         ],
         "bodyParams": [],
-        "expectedSchema": [
+        "returnSchema": [
             {
                 "type": "object",
                 "properties": {
@@ -101,7 +101,7 @@ Example Output:
             }
         ],
         "bodyParams": [],
-        "expectedSchema": [
+        "returnSchema": [
             {
                 "type": "object",
                 "properties": {

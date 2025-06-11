@@ -23,6 +23,8 @@ services:
     redis:
         image: bitnami/redis:latest
         restart: unless-stopped
+        volumes:
+            - redis-data:/data
         ports:
             - "6379:6379/tcp"
         environment:
@@ -30,5 +32,17 @@ services:
         labels:
             - "com.centurylinklabs.watchtower.enable=false"
 
+    registry:
+        image: registry:latest
+        ports:
+            - "5678:5000"
+        environment:
+            REGISTRY_STORAGE_FILESYSTEM_ROOTDIRECTORY: /data
+        volumes:
+            - registry:/data
+        restart: unless-stopped
+
 volumes:
     cloudburst-data:
+    registry:
+    redis-data:

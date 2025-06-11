@@ -12,6 +12,7 @@ import http from "http";
 import https from "https";
 import { onQueueMessage } from "../utils/queue-manager.js";
 import generateSchema from "../workers/generate-schema.js";
+import generateCode from "../workers/generate-code-build.js";
 
 /**
  * Get port from environment and store in Express.
@@ -45,6 +46,7 @@ server.listen(port);
 server.on("error", onError);
 server.on("listening", onListening);
 onQueueMessage("generate-schema", (data, topic) => generateSchema(JSON.parse(data)));
+onQueueMessage("generate-code", (data, topic) => generateCode(JSON.parse(data)));
 
 /**
  * Normalize a port into a number, string, or false.

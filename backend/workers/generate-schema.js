@@ -96,4 +96,4 @@ const generateSchema = async ({ projectId, userId, prompt = "" }) => {
 };
 
 
-export default generateSchema
+export default generateSchema;

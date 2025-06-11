@@ -1,5 +1,5 @@
 @host = http://localhost:8000
-@projectId = your_project_id
+@projectId = cmbrfmxtp0001tz7wj28w8ktd
 @token = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyZHVtYW5hbkBnbWFpbC5jb20iLCJuYW1lIjoiTWFuYW4gR2FuZGhpIiwiaWQiOiJjbWJxem1oaG8wMDAwdHpzd2loMHJocWNsIiwic2NvcGUiOiJhY2Nlc3MiLCJpYXQiOjE3NDk1ODgxNzN9.Aka6U2nxTnSyIAL526XF1qrFTDvDiXm-gds62ocVa3c
 
 ### Create a new project (with GitHub URL)
@@ -8,8 +8,8 @@ Content-Type: application/json
 Authorization: {{token}}
 
 {
-  "title": "My New Project from GitHub",
-  "description": "A cool project generated from a GitHub repository.",
+  "title": "Auth Template",
+  "description": "An Express authentication template.",
   "githubUrl": "https://github.com/MananGandhi1810/express-auth-template",
   "prompt": "Generate a REST API for this express authentication template."
 }
@@ -93,8 +93,3 @@ Authorization: {{token}}
 ### Get project code
 GET {{host}}/project/{{projectId}}/code
 Authorization: {{token}}
-
-### Delete project
-DELETE {{host}}/project/{{projectId}}
-Authorization: {{token}}
-
