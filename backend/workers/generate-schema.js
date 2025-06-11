@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { getRepoCodeBase } from "../utils/github-api.js";
 import { parseCodeBase, parseOpenAPI } from "../utils/schema-generator.js";
+import sendEmail from "../utils/email.js";
 
 const prisma = new PrismaClient();
 
@@ -25,6 +26,7 @@ const generateSchema = async ({ projectId, userId, prompt = "" }) => {
         const project = await prisma.project.findUnique({
             where: { id: projectId, userId: userId },
             select: {
+                title: true,
                 githubUrl: true,
                 openAPISpec: true,
                 user: true,
@@ -84,6 +86,12 @@ const generateSchema = async ({ projectId, userId, prompt = "" }) => {
                 },
             },
         });
+        await sendEmail(
+            project.user.email,
+            "Schema Generation Complete",
+            `Your schema has been successfully generated for the project "${project.title}". The project is now waiting for your approval to proceed with code generation. Please check your dashboard for more details.`
+        );
+        console.log("Schema generation completed successfully.");
     } catch (error) {
         console.error("Error generating schema:", error);
         await prisma.project.update({

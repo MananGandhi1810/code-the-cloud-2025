@@ -1,6 +1,7 @@
 import { PrismaClient } from "@prisma/client";
 import { generateCodeFromEndpoints } from "../utils/code-generator.js";
 import { buildDockerImage, pushDockerImage } from "../utils/docker.js";
+import sendEmail from "../utils/email.js";
 
 const prisma = new PrismaClient();
 
@@ -60,6 +61,7 @@ const generateCode = async ({ projectId, userId }) => {
             user: {
                 select: {
                     ghUsername: true,
+                    email: true,
                 },
             },
         },
@@ -78,6 +80,11 @@ const generateCode = async ({ projectId, userId }) => {
                 dockerImageName: image,
             },
         });
+        await sendEmail(
+            project.user.email,
+            "Code Generation and Docker Image Build Successful",
+            `Your code has been successfully generated and the Docker image has been built and published. Image Name: ${image}. Please check the dashboard for steps on how to use the API.`
+        )
     }
     catch (error) {
         console.error("Error building Docker image:", error);
