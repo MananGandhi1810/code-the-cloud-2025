@@ -8,47 +8,82 @@ export default function CodeVisualizer({ code, language = "json", viewMode = "fo
     const [highlightedCode, setHighlightedCode] = React.useState("");
     const [copied, setCopied] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(true);
-    const [error, setError] = React.useState(null);
-
-    React.useEffect(() => {
+    const [error, setError] = React.useState(null); React.useEffect(() => {
         const initializeHighlighter = async () => {
             try {
                 setIsLoading(true);
                 setError(null);
 
-                const highlighter = await createHighlighter({
-                    themes: ['github-dark', 'github-light'],
-                    langs: ['json', 'javascript', 'typescript', 'yaml', 'xml']
-                });
+                // Fallback to basic syntax highlighting if shiki fails
+                if (!code) {
+                    setHighlightedCode('');
+                    setIsLoading(false);
+                    return;
+                }
 
-                let codeToHighlight = code;
+                try {
+                    const highlighter = await createHighlighter({
+                        themes: ['github-light'],
+                        langs: ['json', 'javascript', 'typescript', 'yaml', 'xml', 'html', 'css', 'markdown', 'python', 'dockerfile', 'text']
+                    });
 
-                // Format JSON if in formatted mode
-                if (viewMode === "formatted" && language === "json") {
-                    try {
-                        const parsed = JSON.parse(code);
-                        codeToHighlight = JSON.stringify(parsed, null, 2);
-                    } catch (e) {
-                        // If JSON parsing fails, use raw code
-                        codeToHighlight = code;
+                    let codeToHighlight = code;
+
+                    // Format JSON if in formatted mode
+                    if (viewMode === "formatted" && language === "json") {
+                        try {
+                            const parsed = JSON.parse(code);
+                            codeToHighlight = JSON.stringify(parsed, null, 2);
+                        } catch (e) {
+                            // If JSON parsing fails, use raw code
+                            codeToHighlight = code;
+                        }
                     }
-                } const html = highlighter.codeToHtml(codeToHighlight, {
-                    lang: language,
-                    theme: 'github-light'
-                });
 
-                setHighlightedCode(html);
+                    const html = highlighter.codeToHtml(codeToHighlight, {
+                        lang: language === 'astro' ? 'html' : language,
+                        theme: 'github-light'
+                    });
+
+                    setHighlightedCode(html);
+                } catch (shikiError) {
+                    console.error('Shiki error:', shikiError);
+                    // Fallback to plain text with basic formatting
+                    let codeToHighlight = code;
+                    if (viewMode === "formatted" && language === "json") {
+                        try {
+                            const parsed = JSON.parse(code);
+                            codeToHighlight = JSON.stringify(parsed, null, 2);
+                        } catch (e) {
+                            codeToHighlight = code;
+                        }
+                    }
+
+                    // Create basic HTML for fallback
+                    const escapedCode = codeToHighlight
+                        .replace(/&/g, '&amp;')
+                        .replace(/</g, '&lt;')
+                        .replace(/>/g, '&gt;');
+
+                    setHighlightedCode(`<pre><code>${escapedCode}</code></pre>`);
+                }
+
             } catch (err) {
                 console.error('Error initializing highlighter:', err);
                 setError('Failed to load syntax highlighter');
+
+                // Final fallback - just show plain text
+                const escapedCode = code
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                setHighlightedCode(`<pre><code>${escapedCode}</code></pre>`);
             } finally {
                 setIsLoading(false);
             }
         };
 
-        if (code) {
-            initializeHighlighter();
-        }
+        initializeHighlighter();
     }, [code, language, viewMode]);
 
     const handleCopy = async () => {
