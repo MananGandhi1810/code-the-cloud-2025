@@ -38,6 +38,9 @@ const buildDockerImage = async (projectId, { mainFile, dependencies, files }, us
         fs.mkdirSync(path.dirname(filePath), { recursive: true });
         fs.writeFileSync(filePath, file.contents);
     }
+    console.log(
+        fs.readdirSync(tempDir).map((file) => path.join(tempDir, file))
+    );
     const contents = fs.readFileSync(dockerFilePath, "utf8");
     console.log("Dockerfile contents:", contents);
 
@@ -45,7 +48,7 @@ const buildDockerImage = async (projectId, { mainFile, dependencies, files }, us
         docker.buildImage(
             {
                 context: tempDir,
-                src: ["Dockerfile"],
+                src: ["Dockerfile", ...files.map((file) => file.fileName)],
             },
             { t: imageTag },
             (err, stream) => {

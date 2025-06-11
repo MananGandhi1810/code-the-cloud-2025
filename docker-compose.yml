@@ -26,7 +26,7 @@ services:
         volumes:
             - redis-data:/data
         ports:
-            - "6379:6379/tcp"
+            - "6380:6379/tcp"
         environment:
             - ALLOW_EMPTY_PASSWORD=yes
         labels:
@@ -41,6 +41,15 @@ services:
         volumes:
             - registry:/data
         restart: unless-stopped
+
+    backend:
+        image: ghcr.io/manangandhi1810/manpost-backend:latest
+        restart: unless-stopped
+        ports:
+            - "2222:8000/tcp"
+        env_file:
+            - ./backend/.env
+        command: sh -c "pnpx prisma migrate deploy && npm run start"
 
 volumes:
     cloudburst-data:

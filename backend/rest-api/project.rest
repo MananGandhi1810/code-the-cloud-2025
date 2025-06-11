@@ -1,5 +1,5 @@
 @host = http://localhost:8000
-@projectId = cmbrfmxtp0001tz7wj28w8ktd
+@projectId = cmbrjurep0001tze5s6qwculo
 @token = Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyZHVtYW5hbkBnbWFpbC5jb20iLCJuYW1lIjoiTWFuYW4gR2FuZGhpIiwiaWQiOiJjbWJxem1oaG8wMDAwdHpzd2loMHJocWNsIiwic2NvcGUiOiJhY2Nlc3MiLCJpYXQiOjE3NDk1ODgxNzN9.Aka6U2nxTnSyIAL526XF1qrFTDvDiXm-gds62ocVa3c
 
 ### Create a new project (with GitHub URL)
@@ -66,24 +66,7 @@ Content-Type: application/json
 Authorization: {{token}}
 
 {
-  "dbSchema": {
-    "User": {
-      "fields": {
-        "id": "String",
-        "name": "String",
-        "email": "String"
-      }
-    }
-  },
-  "seedData": [
-    {
-      "model": "User",
-      "records": [
-        { "name": "Alice", "email": "alice@example.com" },
-        { "name": "Bob", "email": "bob@example.com" }
-      ]
-    }
-  ]
+  "prompt": "Update the schema to include user authentication.",
 }
 
 ### Approve project schema

@@ -35,6 +35,7 @@ If the project needs authenticated routes, check if a bearer token is provided i
 Do not nest the files in any directories, just create all files in the root directory.
 Randomly inject delay in the responses to simulate real-world API behavior, but only upto 200ms.
 Randomly inject errors in the responses to simulate real-world API behavior, but only upto 2% of the time.
+Make sure there are no syntax errors or typos in the code.
 The endpoints are provided below:\n\n${JSON.stringify(endpoints, null, 2)}
 Initial User Prompt: ${prompt}
 Expected Output Schema: {
