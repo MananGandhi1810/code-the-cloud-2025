@@ -266,6 +266,7 @@ export const getProjectCodeHandler = async (req, res) => {
         },
         select: {
             generatedCode: true,
+            dockerImageName: true,
         },
     });
 
@@ -290,7 +291,7 @@ export const getProjectCodeHandler = async (req, res) => {
         message: "Project code fetched successfully",
         data: {
             code: project.generatedCode,
-            imageName: project.imageName,
+            imageName: project.dockerImageName,
         },
     });
 };
