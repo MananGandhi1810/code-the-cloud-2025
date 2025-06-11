@@ -9,6 +9,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Github, CheckIcon, ChevronsUpDownIcon, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { Textarea } from "@/components/ui/textarea"
+import { useRouter } from "next/navigation";
 
 export default function GitHubImportPage() {
     const [repos, setRepos] = React.useState([]);
@@ -17,6 +19,13 @@ export default function GitHubImportPage() {
     const [value, setValue] = React.useState("");
     const [search, setSearch] = React.useState("");
     const [branch, setBranch] = React.useState("");
+    const [selectedRepo, setSelectedRepo] = React.useState(null);
+    const [title, setTitle] = React.useState("");
+    const [description, setDescription] = React.useState("");
+
+    const router = useRouter();
+
+
 
     React.useEffect(() => {
         async function fetchRepos() {
@@ -42,7 +51,43 @@ export default function GitHubImportPage() {
             repo.owner?.login?.toLowerCase().includes(search.toLowerCase())
     );
 
-    const selectedRepo = repos.find((repo) => repo.full_name === value);
+    const handleImport = async () => {
+        try {
+            const token = sessionStorage.getItem("accessToken");
+            if (!token) {
+                alert("Access token not found.");
+                return;
+            }
+
+            const payload = {
+                title: title || selectedRepo.name,
+                description: description,
+                githubUrl: selectedRepo.url.replace(/\.git$/, ""),
+                prompt: `Generate a REST API for this ${selectedRepo.name}.`
+            };
+            console.log("Payload:", payload);
+
+            const res = await axios.post(
+                `${process.env.NEXT_PUBLIC_SERVER_URL}/project`,
+                payload,
+                {
+                    headers: {
+                        "Authorization": `Bearer ${token}`,
+                        "Content-Type": "application/json"
+                    }
+                }
+            );
+            console.log("Response:", res);
+
+            // alert("Project imported successfully!");
+            router.push('/dashboard');
+        } catch (err) {
+            console.error(err);
+            alert("Failed to import project.");
+        }
+    }
+
+
 
     return (
         <div className="min-h-screen py-12 px-8 sm:px-12 lg:px-16">
@@ -107,7 +152,6 @@ export default function GitHubImportPage() {
                                             ? (
                                                 <span>
                                                     <span className="font-medium">{selectedRepo.name}</span>
-                                                    <span className="ml-2 text-sm text-muted-foreground">by {selectedRepo.owner?.login}</span>
                                                 </span>
                                             )
                                             : "Select a repository..."}
@@ -133,6 +177,7 @@ export default function GitHubImportPage() {
                                                         onSelect={(currentValue) => {
                                                             setValue(currentValue === value ? "" : currentValue);
                                                             setOpen(false);
+                                                            setSelectedRepo(repo);
                                                             setSearch("");
                                                         }}
                                                         className="flex flex-col items-start py-2 px-3 hover:bg-muted cursor-pointer"
@@ -160,63 +205,32 @@ export default function GitHubImportPage() {
                             </Popover>
                         )}
                     </div>
-
-                    {/* Branch Selection */}
                     <div className="space-y-4">
                         <div>
                             <h3 className="text-lg font-semibold text-foreground mb-2" style={{ fontFamily: "'Product Sans', sans-serif" }}>
-                                Branch Selection
+                                Project Metadata
                             </h3>
-                            <p className="text-sm text-muted-foreground">
-                                Specify which branch to import (optional, defaults to main)
-                            </p>
-                        </div>                        <Input
-                            placeholder="main"
-                            value={branch}
-                            onChange={(e) => setBranch(e.target.value)}
+                            <p className="text-sm text-muted-foreground">Enter a title and description for your new project</p>
+                        </div>
+
+                        <Input
+                            placeholder="Project Title*"
+                            value={selectedRepo ? selectedRepo.name : title}
+                            onChange={(e) => setTitle(e.target.value)}
                             className="h-12 text-base max-w-md border-2 border-border"
                             style={{ fontFamily: "'Product Sans', sans-serif" }}
+                            required
+                        />
+                        <Textarea
+                            placeholder="Project Description"
+                            value={description}
+                            as="textarea"
+                            onChange={(e) => setDescription(e.target.value)}
+                            className="h-32 text-base max-w-md border-2 border-border"
+                            style={{ fontFamily: "'Product Sans', sans-serif" }}
+                            required
                         />
                     </div>
-
-                    {/* Repository Info */}
-                    {selectedRepo && (
-                        <div className="space-y-4">
-                            <div>
-                                <h3 className="text-lg font-semibold text-foreground mb-2" style={{ fontFamily: "'Product Sans', sans-serif" }}>
-                                    Repository Details
-                                </h3>
-                            </div>
-                            <div className="border border-border rounded-lg p-6 bg-muted/20">
-                                <div className="flex items-start gap-4">
-                                    <Github className="w-6 h-6 text-muted-foreground mt-1" />
-                                    <div className="flex-1 min-w-0">
-                                        <h4 className="text-xl font-semibold text-foreground mb-2" style={{ fontFamily: "'Product Sans', sans-serif" }}>
-                                            {selectedRepo.name}
-                                        </h4>
-                                        <p className="text-base text-muted-foreground mb-3">
-                                            {selectedRepo.description || "No description provided"}
-                                        </p>
-                                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                                            <div>
-                                                <span className="text-muted-foreground">Repository:</span>
-                                                <p className="font-mono text-xs">{selectedRepo.full_name}</p>
-                                            </div>
-                                            <div>
-                                                <span className="text-muted-foreground">Language:</span>
-                                                <p className="font-medium">{selectedRepo.language || "Unknown"}</p>
-                                            </div>
-                                            <div>
-                                                <span className="text-muted-foreground">Visibility:</span>
-                                                <p className="font-medium">{selectedRepo.private ? "Private" : "Public"}</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
                     {/* Action Buttons */}
                     <div className="flex items-center gap-4 pt-8">
                         <Link href="/dashboard">
@@ -232,6 +246,7 @@ export default function GitHubImportPage() {
                             className="px-8 h-12 text-base font-medium border-2 border-black bg-background text-foreground hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
                             style={{ fontFamily: "'Product Sans', sans-serif" }}
                             disabled={!selectedRepo}
+                            onClick={handleImport}
                         >
                             <Github className="w-4 h-4 mr-2" />
                             Import {selectedRepo?.name || 'Repository'} →
@@ -251,3 +266,4 @@ export default function GitHubImportPage() {
         </div>
     );
 }
+
