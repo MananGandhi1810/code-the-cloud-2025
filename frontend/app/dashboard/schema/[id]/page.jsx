@@ -6,8 +6,9 @@ import { ArrowLeft, CheckCircle, XCircle, RefreshCw, Code, Eye, ChevronDown, Che
 import Link from "next/link";
 import CodeVisualizer from "@/components/dashboard/CodeVisualizer";
 import EndpointCard from "@/components/dashboard/EndpointCard";
+import axios from "axios";
+import { useRouter } from "next/navigation";
 
-// Mock schema data - replace with actual data fetching
 const mockSchemaData = {
   success: true,
   message: "Project schema fetched successfully",
@@ -63,103 +64,147 @@ const mockSchema = {
 export default function SchemaPage({ params }) {
   const [prompt, setPrompt] = React.useState("");
   const [isRegenerating, setIsRegenerating] = React.useState(false);
-  const [viewMode, setViewMode] = React.useState("structured"); // structured, formatted, or raw
+  const [viewMode, setViewMode] = React.useState("structured");
   const [selectedEndpoint, setSelectedEndpoint] = React.useState(null);
   const [schemaData, setSchemaData] = React.useState(mockSchema);
   const [isLoading, setIsLoading] = React.useState(false);
   const [error, setError] = React.useState(null);
-  // Function to fetch real schema data from backend
-  const fetchSchemaData = async (schemaId) => {
+  const [projectInfo, setProjectInfo] = React.useState(null);
+  const { id } = React.use(params);
+  const router = useRouter();
+
+
+  // Fetch project and schema data from backend
+  const fetchProjectAndSchema = async (projectId) => {
     try {
       setIsLoading(true);
       setError(null);
+      const token = sessionStorage.getItem("accessToken");
 
-      // For now, simulate API call and use mock data
-      // TODO: Uncomment when backend API is ready
-      /*
-      const response = await fetch(`/api/schemas/${schemaId}`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch schema data');
-      }
-
-      const data = await response.json();
-
-      if (data.success && data.data && data.data.endpoints) {
-        // Transform backend data to match our component structure
-        const transformedSchema = {
-          id: schemaId,
-          name: `Project Schema ${schemaId}`,
-          type: "REST API",
-          status: "pending_approval",
-          endpoints: data.data.endpoints,
-          generatedAt: new Date().toISOString(),
-          lastModified: new Date().toISOString()
-        };
-
-        setSchemaData(transformedSchema);
-      } else {
-        throw new Error('Invalid response format from backend');
-      }
-      */
-
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Use mock data with the provided ID
-      const transformedSchema = {
-        ...mockSchema,
-        id: schemaId,
-        name: `Project Schema ${schemaId}`
-      };
-
-      setSchemaData(transformedSchema);
-
+      // Fetch project info
+      const projectRes = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${projectId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      setProjectInfo(projectRes.data.data);
+      // Fetch schema info
+      const schemaRes = await axios.get(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${projectId}/schema`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+      // Assume schemaRes.data.data has endpoints, status, etc.
+      const schema = schemaRes.data.data;
+      console.log("Fetched schema:", schema);
+      setSchemaData({
+        id: projectId,
+        name: projectRes.data.data?.title || `Project Schema ${projectId}`,
+        type: schema?.type || "REST API",
+        status: schema?.status || "pending_approval",
+        endpoints: schema?.endpoints || [],
+        generatedAt: schema?.generatedAt || new Date().toISOString(),
+        lastModified: schema?.lastModified || new Date().toISOString()
+      });
     } catch (err) {
-      console.error('Error fetching schema data:', err);
-      setError(err.message);
-      // Fallback to mock data
+      console.error('Error fetching project/schema:', err);
+      setError("Failed to fetch from backend, using mock data.");
       setSchemaData(mockSchema);
     } finally {
       setIsLoading(false);
     }
   };
-  // Fetch data when component mounts or params change
+
   React.useEffect(() => {
-    if (params?.id) {
-      fetchSchemaData(params.id);
+    if (id) {
+      fetchProjectAndSchema(id);
     } else {
-      // If no ID is provided, use mock data
       setSchemaData(mockSchema);
     }
-  }, [params?.id]);
+    // eslint-disable-next-line
+  }, [id]);
 
-  const handleApprove = () => {
-    // Handle schema approval
-    console.log("Schema approved");
+
+  const handleApprove = async () => {
+    const token = sessionStorage.getItem('accessToken');
+    if (!token) {
+      console.error("No token found in sessionStorage");
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${id}/schema/approve`,
+        {}, // No body for this request
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      console.log('Schema approved:', response.data);
+    
+      router.push(`/dashboard`)
+    } catch (error) {
+      console.error('Error approving schema:', error);
+      throw error;
+    }
   };
 
   const handleReject = () => {
     // Handle schema rejection
     console.log("Schema rejected");
   };
-
   const handleRegenerate = async () => {
     if (!prompt.trim()) return;
 
+    const accessToken = sessionStorage.getItem("accessToken");
+    if (!accessToken) {
+      console.error("No access token found");
+      return;
+    }
+
     setIsRegenerating(true);
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    setIsRegenerating(false);
-    setPrompt("");
+
+    try {
+      const response = await axios.put(
+        `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${id}/schema`,
+        { prompt },
+        {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
+      );
+      // Refresh schema data after regeneration
+
+      console.log("Schema regenerated:", response.data);
+      setTimeout(() => {
+        fetchProjectAndSchema(id);
+      }, 1000); // Delay to allow backend processing  
+    } catch (error) {
+      console.error("Failed to regenerate schema:", error?.response?.data || error.message);
+    } finally {
+      setIsRegenerating(false);
+      setPrompt("");
+    }
+    setTimeout(() => {
+      fetchProjectAndSchema(id);
+    }, 2000);
   };
 
   // Generate the schema for visualization
   const getSchemaForVisualization = () => {
     if (viewMode === "structured") {
-      return null; // We'll handle this separately
+      return null;
     }
-
     if (viewMode === "raw") {
       return JSON.stringify({
         success: true,
@@ -169,7 +214,6 @@ export default function SchemaPage({ params }) {
         }
       }, null, 2);
     }
-
     // Formatted view - create a more readable structure
     const formattedData = {
       projectName: schemaData.name,
@@ -182,7 +226,8 @@ export default function SchemaPage({ params }) {
         bodyParams: endpoint.bodyParams.length,
         response: endpoint.returnSchema
       }))
-    }; return JSON.stringify(formattedData, null, 2);
+    };
+    return JSON.stringify(formattedData, null, 2);
   };
 
   return (
@@ -204,7 +249,8 @@ export default function SchemaPage({ params }) {
               <div>
                 <h1 className="text-xl font-medium text-foreground" style={{ fontFamily: "'Product Sans', sans-serif" }}>
                   {schemaData.name} Schema
-                </h1>                <p className="text-sm text-muted-foreground">
+                </h1>
+                <p className="text-sm text-muted-foreground">
                   {isLoading
                     ? 'Loading schema...'
                     : error
@@ -228,7 +274,8 @@ export default function SchemaPage({ params }) {
             </div>
           </div>
         </div>
-      </div>      {isLoading ? (
+      </div>
+      {isLoading ? (
         <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
@@ -259,10 +306,11 @@ export default function SchemaPage({ params }) {
                     Schema Information
                   </h3>
                 </div>
-                <div className="space-y-4">                                <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
-                  <span className="text-sm font-medium text-gray-600 uppercase tracking-wider">Type</span>
-                  <p className="text-lg font-medium text-foreground mt-1" style={{ fontFamily: "'Product Sans', sans-serif" }}>{schemaData.type}</p>
-                </div>
+                <div className="space-y-4">
+                  <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
+                    <span className="text-sm font-medium text-gray-600 uppercase tracking-wider">Type</span>
+                    <p className="text-lg font-medium text-foreground mt-1" style={{ fontFamily: "'Product Sans', sans-serif" }}>{schemaData.type}</p>
+                  </div>
                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-200">
                     <span className="text-sm font-medium text-gray-600 uppercase tracking-wider">Endpoints</span>
                     <p className="text-lg font-medium text-foreground mt-1" style={{ fontFamily: "'Product Sans', sans-serif" }}>
@@ -282,7 +330,8 @@ export default function SchemaPage({ params }) {
                     </p>
                   </div>
                 </div>
-              </div>                        {/* Approval Actions */}
+              </div>
+              {/* Approval Actions */}
               {schemaData.status === 'pending_approval' && (
                 <div className="space-y-6">
                   <div className="mb-4">
@@ -302,15 +351,7 @@ export default function SchemaPage({ params }) {
                       <CheckCircle className="w-5 h-5 mr-2" />
                       Approve Schema
                     </Button>
-                    <Button
-                      onClick={handleReject}
-                      variant="destructive"
-                      className="flex-1 text-lg py-6 border-2 border-red-600 font-medium"
-                      style={{ fontFamily: "'Product Sans', sans-serif" }}
-                    >
-                      <XCircle className="w-5 h-5 mr-2" />
-                      Reject
-                    </Button>
+
                   </div>
                 </div>
               )}
@@ -366,7 +407,8 @@ export default function SchemaPage({ params }) {
                   <h3 className="text-2xl font-medium text-foreground" style={{ fontFamily: "'Product Sans', sans-serif" }}>
                     View Options
                   </h3>
-                </div>                            <div className="flex gap-2">
+                </div>
+                <div className="flex gap-2">
                   <Button
                     variant={viewMode === "structured" ? "default" : "outline"}
                     size="sm"
@@ -399,7 +441,8 @@ export default function SchemaPage({ params }) {
                 </div>
               </div>
             </div>
-          </div>                {/* Right Panel - Schema Visualization */}
+          </div>
+          {/* Right Panel - Schema Visualization */}
           <div className="w-3/5">
             {viewMode === "structured" ? (
               <div className="h-full border border-black/40 rounded-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
@@ -410,11 +453,13 @@ export default function SchemaPage({ params }) {
                       <div className="w-3 h-3 rounded-full bg-red-500"></div>
                       <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                       <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                    </div>                                    <span className="text-sm text-muted-foreground font-mono">
+                    </div>
+                    <span className="text-sm text-muted-foreground font-mono">
                       {schemaData.endpoints.length} endpoints detected
                     </span>
                   </div>
-                </div>                            {/* Endpoints List */}
+                </div>
+                {/* Endpoints List */}
                 <div className="p-4 h-[calc(100%-4rem)] overflow-y-auto thin-scrollbar space-y-3">
                   {schemaData.endpoints.length === 0 ? (
                     <div className="text-center py-12">
@@ -442,7 +487,9 @@ export default function SchemaPage({ params }) {
                 code={getSchemaForVisualization()}
                 language="json"
                 viewMode="formatted"
-              />)}                </div>
+              />
+            )}
+          </div>
         </div>
       )}
     </div>

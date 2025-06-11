@@ -46,8 +46,8 @@ export default function EndpointCard({ endpoint, isExpanded, onToggle }) {
 
     return (
         <div className={`border rounded-xl transition-all ${isExpanded
-                ? 'border-blue-300 bg-blue-50/50 shadow-sm'
-                : 'border-gray-200 hover:border-gray-300 bg-white hover:shadow-sm'
+            ? 'border-blue-300 bg-blue-50/50 shadow-sm'
+            : 'border-gray-200 hover:border-gray-300 bg-white hover:shadow-sm'
             }`}>
             {/* Header - Always Visible */}
             <div
@@ -108,17 +108,15 @@ export default function EndpointCard({ endpoint, isExpanded, onToggle }) {
                                     <div key={idx} className="bg-white border border-gray-200 p-3 rounded-lg">
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="font-mono text-sm font-semibold text-gray-900">{param.name}</span>
-                                            <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded border">
-                                                {param.type}
-                                            </span>
+                                         
                                             {param.required && (
                                                 <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
                                                     required
                                                 </span>
                                             )}
                                         </div>
-                                        {param.description && (
-                                            <p className="text-sm text-gray-600">{param.description}</p>
+                                        {param && (
+                                            <p className="text-sm text-gray-600">{JSON.stringify(param)}</p>
                                         )}
                                     </div>
                                 ))}
@@ -138,18 +136,20 @@ export default function EndpointCard({ endpoint, isExpanded, onToggle }) {
                                     <div key={idx} className="bg-white border border-gray-200 p-3 rounded-lg">
                                         <div className="flex items-center gap-2 mb-1">
                                             <span className="font-mono text-sm font-semibold text-gray-900">{param.name}</span>
-                                            <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded border">
-                                                {param.type}
-                                            </span>
+                                       
                                             {param.required && (
                                                 <span className="text-xs text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-200">
                                                     required
                                                 </span>
                                             )}
                                         </div>
-                                        {param.description && (
-                                            <p className="text-sm text-gray-600">{param.description}</p>
-                                        )}
+                                        {param && Object.entries(param).map(([key, value]) => (
+                                            <p key={key} className="text-sm text-gray-600">
+                                                <span className="font-mono text-blue-800 font-semibold">{key}</span>:{" "}
+                                                <span className="text-gray-700 italic">{value}</span>
+                                            </p>
+                                        ))}
+
                                     </div>
                                 ))}
                             </div>

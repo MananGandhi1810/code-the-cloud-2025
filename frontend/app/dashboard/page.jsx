@@ -1,78 +1,76 @@
 "use client";
 import ProjectCard from "@/components/dashboard/ProjectCard";
 import * as React from "react";
+import axios from "axios";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Plus, Github, FileText } from "lucide-react";
 import { useRouter } from 'next/navigation';
 
-const dummyProjects = [
-    {
-        id: 1,
-        name: "E-commerce API",
-        description: "RESTful API for online shopping platform",
-        type: "GitHub Repository",
-        status: "Active",
-        lastUpdated: "2 hours ago",
-        endpoints: 24,
-        url: "https://github.com/user/ecommerce-api"
-    },
-    {
-        id: 2,
-        name: "User Management Service",
-        description: "Microservice for user authentication and profiles",
-        type: "OpenAPI Spec",
-        status: "Active",
-        lastUpdated: "1 day ago",
-        endpoints: 12,
-        url: "https://api.userservice.com/docs"
-    },
-    {
-        id: 3,
-        name: "Payment Gateway Integration",
-        description: "Payment processing API with multiple providers",
-        type: "GitHub Repository",
-        status: "Inactive",
-        lastUpdated: "3 days ago",
-        endpoints: 8,
-        url: "https://github.com/user/payment-gateway"
-    },
-    {
-        id: 4,
-        name: "Social Media Analytics",
-        description: "API for social media data aggregation",
-        type: "OpenAPI Spec",
-        status: "Active",
-        lastUpdated: "5 hours ago",
-        endpoints: 18,
-        url: "https://analytics.social.com/api"
-    },
-    {
-        id: 5,
-        name: "Inventory Management",
-        description: "Stock and warehouse management system",
-        type: "GitHub Repository",
-        status: "Active",
-        lastUpdated: "12 hours ago",
-        endpoints: 15,
-        url: "https://github.com/user/inventory-api"
-    }
-];
-
-
 export default function DashboardPage() {
     const [search, setSearch] = React.useState("");
-    const [filteredProjects, setFilteredProjects] = React.useState(dummyProjects);
+    const [projects, setProjects] = React.useState([]);
+    const [filteredProjects, setFilteredProjects] = React.useState([]);
     const router = useRouter();
 
     React.useEffect(() => {
-        const filtered = dummyProjects.filter(project =>
-            project.name.toLowerCase().includes(search.toLowerCase()) ||
-            project.description.toLowerCase().includes(search.toLowerCase()) ||
-            project.type.toLowerCase().includes(search.toLowerCase())
+        async function fetchProjects() {
+            try {
+                const token = sessionStorage.getItem("accessToken");
+                const res = await axios.get(
+                    `${process.env.NEXT_PUBLIC_SERVER_URL}/project`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                console.log("Projects response:", res);
+                // Adapt to backend: res.data.data is an array of projects
+                setProjects(res.data.data.projects || []);
+                setFilteredProjects(res.data.data.projects || []);
+            } catch (err) {
+                console.error("Failed to fetch projects:", err);
+                setProjects([]);
+                setFilteredProjects([]);
+            }
+        }
+        fetchProjects();
+    }, []);
+ React.useEffect(() => {
+        let intervalId;
+        async function fetchProjects() {
+            try {
+                const token = sessionStorage.getItem("accessToken");
+                const res = await axios.get(
+                    `${process.env.NEXT_PUBLIC_SERVER_URL}/project`,
+                    {
+                        headers: {
+                            Authorization: `Bearer ${token}`,
+                        },
+                    }
+                );
+                console.log("Projects response:", res);
+                setProjects(res.data.data.projects || []);
+                setFilteredProjects(res.data.data.projects || []);
+            } catch (err) {
+                console.error("Failed to fetch projects:", err);
+                setProjects([]);
+                setFilteredProjects([]);
+            }
+        }
+        fetchProjects();
+        intervalId = setInterval(fetchProjects, 3500); // Poll every 3.5 seconds
+        return () => clearInterval(intervalId);
+    }, []);
+    React.useEffect(() => {
+        const filtered = projects.filter(project =>
+            (project.title || "").toLowerCase().includes(search.toLowerCase()) ||
+            (project.description || "").toLowerCase().includes(search.toLowerCase()) ||
+            (project.type || "").toLowerCase().includes(search.toLowerCase())
         );
         setFilteredProjects(filtered);
-    }, [search]);
+    }, [search, projects]);
 
     const handleImportSelect = (value) => {
         if (value === "github") {
@@ -101,7 +99,8 @@ export default function DashboardPage() {
                     <p className="text-xl text-muted-foreground leading-relaxed mb-8 max-w-3xl font-light" style={{ fontFamily: "'Product Sans', sans-serif", fontWeight: 300 }}>
                         View, manage, and monitor all your API projects in one place. Import new repositories or specifications to get started.
                     </p>
-                </div>                <div className="flex flex-col sm:flex-row gap-3 mb-6">
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3 mb-6">
                     <div className="flex-1 relative max-w-md">
                         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
@@ -111,13 +110,15 @@ export default function DashboardPage() {
                             className="h-10 pl-10 text-sm border-2 border-border"
                             style={{ fontFamily: "'Product Sans', sans-serif" }}
                         />
-                    </div>                    <Select onValueChange={handleImportSelect}>
+                    </div>
+                    <Select onValueChange={handleImportSelect}>
                         <SelectTrigger className="w-full sm:w-40 h-10 border-2 border-border text-sm" style={{ fontFamily: "'Product Sans', sans-serif" }}>
                             <div className="flex items-center gap-2">
                                 <Plus className="w-4 h-4" />
                                 <SelectValue placeholder="Import New" />
                             </div>
-                        </SelectTrigger><SelectContent>
+                        </SelectTrigger>
+                        <SelectContent>
                             <SelectItem value="github" className="text-sm py-2">
                                 <div className="flex items-center gap-2">
                                     <Github className="w-4 h-4" />
@@ -147,7 +148,8 @@ export default function DashboardPage() {
                             No projects found
                         </h3>
                         <p className="text-muted-foreground" style={{ fontFamily: "'Product Sans', sans-serif", fontWeight: 300 }}>
-                            Try adjusting your search or import a new project                        </p>
+                            Try adjusting your search or import a new project
+                        </p>
                     </div>
                 )}
             </div>

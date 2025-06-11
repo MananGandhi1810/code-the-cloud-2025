@@ -5,6 +5,7 @@ import { ArrowLeft, Download, Copy, FileText, Play, Archive, Check, ChevronDown,
 import Link from "next/link";
 import CodeVisualizer from "@/components/dashboard/CodeVisualizer";
 import { Tree, Folder, File } from "@/components/magicui/file-tree";
+import axios from "axios";
 
 // Mock project data - replace with actual data fetching
 const mockProjectData = {
@@ -307,35 +308,44 @@ export default function ProjectPage({ params }) {
     const [copiedCommand, setCopiedCommand] = React.useState(null);
 
     // Function to fetch real project data from backend
+    // Function to fetch real project data from backend
     const fetchProjectData = async (projectId) => {
         try {
             setIsLoading(true);
             setError(null);
 
-            // For now, simulate API call and use mock data
-            // TODO: Uncomment when backend API is ready
-            /*
-            const response = await fetch(`/api/projects/${projectId}`);
-
-            if (!response.ok) {
-                throw new Error('Failed to fetch project data');
+            // Use axios to fetch project code from backend
+            const accessToken = sessionStorage.getItem("accessToken");
+            if (accessToken) {
+                const response = await axios.get(
+                    `${process.env.NEXT_PUBLIC_SERVER_URL}/project/${projectId}/code`,
+                    {
+                        headers: {
+                            Authorization: accessToken
+                        }
+                    }
+                );
+                console.log("Project code data:", response.data.data.code.files);
+                const backendFiles = response.data.data.code.files;
+                const transformedFiles = backendFiles.map((f, idx) => ({
+                    id: String(idx + 1),
+                    name: f.fileName,
+                    type: "file",
+                    content: f.contents
+                }));
+                console.log(response.data.data);
+                setProjectData({
+                    ...response.data.data,
+                    files: transformedFiles
+                });
             }
 
-            const data = await response.json();
-            setProjectData(data);
-            */
-
             // Simulate API delay
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // Use mock data with the provided ID
-            const transformedProject = {
-                ...mockProjectData,
-                id: projectId,
-                name: `Project ${projectId}`
-            };
 
-            setProjectData(transformedProject);
+
+            // setProjectData(transformedProject);
 
         } catch (err) {
             console.error('Error fetching project data:', err);
@@ -346,6 +356,7 @@ export default function ProjectPage({ params }) {
             setIsLoading(false);
         }
     };
+    // ...existing code...
 
     // Fetch data when component mounts or params change
     React.useEffect(() => {
@@ -424,17 +435,7 @@ export default function ProjectPage({ params }) {
     };
 
     const handleCopyDockerCommands = async () => {
-        const dockerCommands = `# Build Docker image
-docker build -t ${projectData.name.toLowerCase().replace(/\s+/g, '-')} .
-
-# Run Docker container
-docker run -p 3000:3000 ${projectData.name.toLowerCase().replace(/\s+/g, '-')}
-
-# Tag for registry (optional)
-docker tag ${projectData.name.toLowerCase().replace(/\s+/g, '-')} your-registry/${projectData.name.toLowerCase().replace(/\s+/g, '-')}:latest
-
-# Push to registry (optional)
-docker push your-registry/${projectData.name.toLowerCase().replace(/\s+/g, '-')}:latest`;
+        const dockerCommands = `docker pull ${projectData.imageName}`;
 
         try {
             await navigator.clipboard.writeText(dockerCommands);
@@ -446,13 +447,13 @@ docker push your-registry/${projectData.name.toLowerCase().replace(/\s+/g, '-')}
     };
 
     const handleCopyGCloudCommand = async () => {
-        const gcloudCommand = `# Build and deploy to Google Cloud Run
-gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/${projectData.name.toLowerCase().replace(/\s+/g, '-')}
-gcloud run deploy ${projectData.name.toLowerCase().replace(/\s+/g, '-')} \\
-  --image gcr.io/YOUR_PROJECT_ID/${projectData.name.toLowerCase().replace(/\s+/g, '-')} \\
-  --platform managed \\
-  --region us-central1 \\
-  --allow-unauthenticated`;
+        //         const gcloudCommand = `# Build and deploy to Google Cloud Run
+        // gcloud builds submit --tag gcr.io/YOUR_PROJECT_ID/${projectData.name.toLowerCase().replace(/\s+/g, '-')}
+        // gcloud run deploy ${projectData.name.toLowerCase().replace(/\s+/g, '-')} \\
+        //   --image gcr.io/YOUR_PROJECT_ID/${projectData.name.toLowerCase().replace(/\s+/g, '-')} \\
+        //   --platform managed \\
+        //   --region us-central1 \\
+        //   --allow-unauthenticated`;
 
         try {
             await navigator.clipboard.writeText(gcloudCommand);
@@ -522,7 +523,7 @@ gcloud run deploy ${projectData.name.toLowerCase().replace(/\s+/g, '-')} \\
                                         ? 'bg-yellow-100 text-yellow-800'
                                         : 'bg-gray-100 text-gray-800'
                                     }`}>
-                                    {projectData.status.replace('_', ' ').toUpperCase()}
+                                    {/* {projectData.status.replace('_', ' ').toUpperCase()} */}
                                 </div>
                             )}
                         </div>
@@ -641,10 +642,7 @@ gcloud run deploy ${projectData.name.toLowerCase().replace(/\s+/g, '-')} \\
                                                 {/* Commands List */}
                                                 <div className="p-4 space-y-3">
                                                     {[
-                                                        `docker build -t ${projectData.name.toLowerCase().replace(/\s+/g, '-')} .`,
-                                                        `docker run -p 3000:3000 ${projectData.name.toLowerCase().replace(/\s+/g, '-')}`,
-                                                        `docker tag ${projectData.name.toLowerCase().replace(/\s+/g, '-')} your-registry/${projectData.name.toLowerCase().replace(/\s+/g, '-')}:latest`,
-                                                        `docker push your-registry/${projectData.name.toLowerCase().replace(/\s+/g, '-')}:latest`].map((command, index) => (
+                                                        `docker pull ${projectData.imageName}`].map((command, index) => (
                                                             <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
                                                                 <code className="text-sm font-mono text-gray-800 flex-1 mr-3">
                                                                     {command}
