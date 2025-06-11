@@ -7,7 +7,7 @@ on:
 
 env:
     REGISTRY: ghcr.io
-    IMAGE_NAME: manangandhi1810/cloudburst-backend
+    IMAGE_NAME: manangandhi1810/manpost-backend
 
 jobs:
     build_and_publish:
