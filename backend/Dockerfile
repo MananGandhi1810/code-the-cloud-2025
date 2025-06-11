@@ -8,14 +8,12 @@ COPY prisma ./prisma/
 RUN pnpx prisma generate
 
 FROM node:lts-alpine AS production
-USER root
 WORKDIR /usr/src/app
-RUN addgroup -g 1000 node
-RUN chown sudo chown 1000:1000 .
+RUN npm i -g pnpm@latest
+RUN apk add --no-cache openssl
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/prisma ./prisma/
 COPY . .
-RUN npm i -g pnpm@latest-10
 EXPOSE 3000
-USER node
+# USER node
 CMD ["pnpm", "start"]
