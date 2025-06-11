@@ -7,7 +7,7 @@ const resend = new Resend(resendApiKey);
 
 const sendEmail = async (to, subject, html) => {
     return await resend.emails.send({
-        from: `CloudBurst <${resendEmail}>`,
+        from: `ManPost <${resendEmail}>`,
         to: [to],
         subject: subject,
         html: html,
