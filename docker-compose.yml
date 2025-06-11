@@ -49,7 +49,7 @@ services:
             - "2222:8000/tcp"
         env_file:
             - ./backend/.env
-        command: sh -c "pnpx prisma migrate deploy && npm run start"
+        command: sh -c "pnpx prisma migrate deploy && pnpm run start"
 
 volumes:
     cloudburst-data:

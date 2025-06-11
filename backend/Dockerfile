@@ -8,8 +8,12 @@ COPY prisma ./prisma/
 RUN pnpx prisma generate
 
 FROM node:lts-alpine AS production
-WORKDIR /usr/src/app
 USER root
+WORKDIR /usr/src/app
+RUN addgroup -g 1000 node && \
+    adduser -D -u 1000 -G node node
+RUN chown -R node:node /usr/src/app
+USER node
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/prisma ./prisma/
 COPY . .
