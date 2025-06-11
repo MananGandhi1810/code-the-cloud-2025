@@ -10,10 +10,8 @@ RUN pnpx prisma generate
 FROM node:lts-alpine AS production
 USER root
 WORKDIR /usr/src/app
-RUN addgroup -g 1000 node && \
-    adduser -D -u 1000 -G node node
-RUN chown -R node:node /usr/src/app
-USER node
+RUN addgroup -g 1000 node
+RUN chown sudo chown 1000:1000 .
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/prisma ./prisma/
 COPY . .
