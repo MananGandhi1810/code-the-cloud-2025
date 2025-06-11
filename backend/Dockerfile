@@ -9,9 +9,7 @@ RUN pnpx prisma generate
 
 FROM node:lts-alpine AS production
 WORKDIR /usr/src/app
-RUN useradd -D node
-RUN chown node:node /usr/src/app
-USER node
+USER root
 COPY --from=builder /usr/src/app/node_modules ./node_modules
 COPY --from=builder /usr/src/app/prisma ./prisma/
 COPY . .
