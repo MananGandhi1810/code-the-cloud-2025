@@ -288,6 +288,9 @@ export const getProjectCodeHandler = async (req, res) => {
     res.status(200).json({
         success: true,
         message: "Project code fetched successfully",
-        data: { code: project.generatedCode },
+        data: {
+            code: project.generatedCode,
+            imageName: project.imageName,
+        },
     });
 };
