@@ -3,6 +3,7 @@ import os from "os";
 import fs from "fs";
 import path from "path";
 import dotenv from "dotenv";
+import url from "url";
 
 dotenv.config();
 const docker = new Docker();
@@ -29,7 +30,10 @@ const buildDockerImage = async (projectId, { mainFile, dependencies, files }, us
     const imageTag = `${process.env.DOCKER_REGISTRY}/${userGhAcc}/mock-api-server-${projectId}:latest`.toLowerCase();
 
     const tempDir = path
-        .join(os.tmpdir(), imageTag.split(":")[0] + "-")
+        .join(
+            path.dirname(url.fileURLToPath(import.meta.url)),
+            imageTag.split(":")[0] + "-"
+        )
         .replaceAll(/[^a-z0-9-]/g, "-");
     fs.mkdirSync(tempDir, { recursive: true });
     const dockerFilePath = path.join(tempDir, "Dockerfile");
