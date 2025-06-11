@@ -27,14 +27,13 @@ CMD ["npm", "start"]`;
 
 const buildDockerImage = async (projectId, { mainFile, dependencies, files }, userGhAcc) => {
     const dockerFileContent = getDockerFile({ mainFile, dependencies, files });
-    const imageTag = `${process.env.DOCKER_REGISTRY}/${userGhAcc}/mock-api-server-${projectId}:latest`.toLowerCase();
+    const imageTag =
+        `${process.env.DOCKER_REGISTRY}/${userGhAcc}/mock-api-server-${projectId}:latest`.toLowerCase();
 
-    const tempDir = path
-        .join(
-            path.dirname(url.fileURLToPath(import.meta.url)),
-            imageTag.split(":")[0] + "-"
-        )
-        .replaceAll(/[^a-z0-9-]/g, "-");
+    const tempDir = path.join(
+        path.dirname(url.fileURLToPath(import.meta.url)),
+        (imageTag.split(":")[0] + "-").replaceAll(/[^a-z0-9-]/g, "-")
+    );
     fs.mkdirSync(tempDir, { recursive: true });
     const dockerFilePath = path.join(tempDir, "Dockerfile");
     fs.writeFileSync(dockerFilePath, dockerFileContent);
@@ -81,8 +80,8 @@ const buildDockerImage = async (projectId, { mainFile, dependencies, files }, us
             }
         );
     });
-    
-    return build
+
+    return build;
 }
 
 const pushDockerImage = async (imageName) => {
