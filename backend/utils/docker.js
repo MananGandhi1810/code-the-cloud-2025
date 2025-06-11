@@ -24,9 +24,9 @@ USER node
 CMD ["npm", "start"]`;
 };
 
-const buildDockerImage = async (projectId, { mainFile, dependencies, files }) => {
+const buildDockerImage = async (projectId, { mainFile, dependencies, files }, userGhAcc) => {
     const dockerFileContent = getDockerFile({ mainFile, dependencies, files });
-    const imageTag = `mock-api-server-${projectId}:latest`;
+    const imageTag = `${process.env.DOCKER_REGISTRY}/${userGhAcc}/mock-api-server-${projectId}:latest`.toLowerCase();
 
     const tempDir = fs.mkdtempSync(
         path.join(os.tmpdir(), imageTag.split(":")[0] + "-")
@@ -57,17 +57,9 @@ const buildDockerImage = async (projectId, { mainFile, dependencies, files }) =>
                         try {
                             const message = JSON.parse(data.toString());
                             if (message.error) {
-                                console.error("Error in Docker build stream:", message.error);
                                 reject(new Error(message.error));
-                            } else {
-                                console.log("Docker build stream message:", message);
                             }
-                        } catch (parseError) {
-                            console.error(
-                                "Error parsing Docker build stream data:",
-                                parseError
-                            );
-                        }
+                        } catch (parseError) {}
                     });
                     stream.on("end", () => {
                         console.log("Docker image built successfully");
@@ -99,16 +91,12 @@ const pushDockerImage = async (imageName) => {
     return new Promise((resolve, reject) => {
         stream.on("data", (data) => {
             try {
-            const message = JSON.parse(data.toString());
-            if (message.error) {
-                console.error("Error pushing Docker image:", message.error);
-                reject(new Error(message.error));
-            } else {
-                console.log("Pushing Docker image:", message);
-            }}
-            catch (err) {
-                console.error("Error parsing Docker push stream data:", err);
-            }
+                const message = JSON.parse(data.toString());
+                if (message.error) {
+                    console.error("Error pushing Docker image:", message.error);
+                    reject(new Error(message.error));
+                }
+            } catch (err) {}
         });
         stream.on("end", () => resolve("Image pushed successfully"));
         stream.on("error", (err) => reject(err));

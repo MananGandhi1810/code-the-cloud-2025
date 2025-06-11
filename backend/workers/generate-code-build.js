@@ -57,10 +57,19 @@ const generateCode = async ({ projectId, userId }) => {
         where: { id: projectId, userId: userId },
         select: {
             generatedCode: true,
+            user: {
+                select: {
+                    ghUsername: true,
+                },
+            },
         },
     });
     try {
-        const image = await buildDockerImage(projectId, project.generatedCode);
+        const image = await buildDockerImage(
+            projectId,
+            project.generatedCode,
+            project.user.ghUsername
+        );
         await pushDockerImage(image);
         await prisma.project.update({
             where: { id: projectId },
