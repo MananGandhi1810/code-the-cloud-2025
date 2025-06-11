@@ -29,7 +29,9 @@ const buildDockerImage = async (projectId, { mainFile, dependencies, files }, us
     const imageTag = `${process.env.DOCKER_REGISTRY}/${userGhAcc}/mock-api-server-${projectId}:latest`.toLowerCase();
 
     const tempDir = fs.mkdtempSync(
-        path.join(os.tmpdir(), imageTag.split(":")[0] + "-")
+        path
+            .join(os.tmpdir(), imageTag.split(":")[0] + "-")
+            .replaceAll(/[^a-z0-9-]/g, "-")
     );
     const dockerFilePath = path.join(tempDir, "Dockerfile");
     fs.writeFileSync(dockerFilePath, dockerFileContent);
