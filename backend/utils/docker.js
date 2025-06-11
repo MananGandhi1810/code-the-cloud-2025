@@ -30,7 +30,7 @@ const buildDockerImage = async (projectId, { mainFile, dependencies, files }, us
 
     const tempDir = fs.mkdirSync(
         path
-            .join(path.dirname(), "/projects", imageTag.split(":")[0] + "-")
+            .join("/usr/src", "/projects", imageTag.split(":")[0] + "-")
             .replaceAll(/[^a-z0-9-]/g, "-")
     );
     const dockerFilePath = path.join(tempDir, "Dockerfile");
